@@ -15,15 +15,7 @@ from drsapp.models import MyUser
 from telecaller.models import Student
 
 
-class EmployeeCreate(CreateView):
-    model = MyUser
-    form_class = UserCreationForm
-    template_name = 'employeeform.html'
-    success_url = reverse_lazy(' telecallerlist')
 
-    def form_valid(self, form):
-        form.instance.role = MyUser.TELECALLER
-        return super(EmployeeCreate, self).form_valid(form)
 
 
 class StudentCreate(CreateView):
@@ -74,12 +66,35 @@ class StudentUpdate(UpdateView):
     success_url = reverse_lazy('studentcreate')
     pk_url_kwarg = 'id'
 
+    def form_valid(self, form):
+
+        if form.instance.status == 'admitted':
+            batch = Batch.objects.get(id=form.data.__getitem__('batch'))
+            if batch.remaining_seats == 0:
+                error = True
+                messages.error(self.request, 'SORRY!! No seat available for the selected course')
+                return redirect('enquirieslist')
+            else:
+                batch.remaining_seats = batch.remaining_seats - 1
+                batch.save()
+        return super(StudentUpdate, self).form_valid(form)
+
 
 class StudentDelete(DeleteView):
     model = Student
     template_name = 'deletestudent.html'
     success_url = reverse_lazy('studentcreate')
     pk_url_kwarg = 'id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        student = context['student']
+        if student.status == 'admitted':
+            batch = Batch.objects.get(id=student.batch.id)
+            batch.remaining_seats += 1
+            batch.save()
+
+            return context
 
 
 class TeleHome(TemplateView):
@@ -94,11 +109,5 @@ class BatchList(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['batches'] = self.model.objects.all()
-
-        for batch in context['batches']:
-            students = Student.objects.filter(batch=batch)
-            for student in students:
-                if student.status == 'admitted':
-                    batch.remaining_seats -= 1
 
         return context

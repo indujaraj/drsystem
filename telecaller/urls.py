@@ -4,7 +4,7 @@ from telecaller import views
 
 urlpatterns = [
 
-    path('createemployee',views.EmployeeCreate.as_view(), name='employeecreate'),
+
     path('createstudent', views.StudentCreate.as_view(), name='studentcreate'),
     path('updatestudent/<int:id>',views.StudentUpdate.as_view(),name='updatestudent'),
     path('deletestudent/<int:id>',views.StudentDelete.as_view(),name='deletestudent'),

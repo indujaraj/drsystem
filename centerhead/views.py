@@ -37,12 +37,6 @@ class BatchCreate(CreateView):
         context = super().get_context_data(**kwargs)
         context['batches'] = self.model.objects.all()
 
-        for batch in context['batches']:
-            students = Student.objects.filter(batch=batch)
-            for student in students:
-                if student.status == 'admitted':
-                    batch.remaining_seats -= 1
-
         return context
 
 
@@ -70,3 +64,14 @@ class TeleCallerDelete(DeleteView):
     template_name = 'deletetelecaller.html'
     success_url = reverse_lazy('telecallerlist')
     pk_url_kwarg = 'id'
+
+
+class EmployeeCreate(CreateView):
+    model = MyUser
+    form_class = UserCreationForm
+    template_name = 'employeeform.html'
+    success_url = reverse_lazy('telecallerlist')
+
+    def form_valid(self, form):
+        form.instance.role = MyUser.TELECALLER
+        return super(EmployeeCreate, self).form_valid(form)
